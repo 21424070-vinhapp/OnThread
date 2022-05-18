@@ -7,47 +7,100 @@ import android.os.Handler;
 import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
+    int a, b, c;
+    private final String TAG = "BBB";
+    MyFlag mMyFlag;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Thread thread1=new Thread(new Runnable() {
+        a = b = c = 0;
+        mMyFlag = new MyFlag(0);
+        Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                printLog("A");
+                synchronized (mMyFlag) {
+                    for (int i = 0; i < 10;) {
+                        if (mMyFlag.count == 0) {
+                            a = i;
+                            Log.d(TAG, "A = " + a);
+                            mMyFlag.count=1;
+                            //danh thuc tat ca cac thread dang wait cai flag nay
+                            mMyFlag.notifyAll();
+                            //i chi tang khi nhay vao truong hop if
+                            i++;
+                        }
+                        else
+                        {
+                            try {
+                                //khong dung trang thai roi vao trang thai wait
+                                mMyFlag.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
             }
         });
 
-        Thread thread2=new Thread(new Runnable() {
+        Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                printLog("B");
+                synchronized (mMyFlag) {
+                    for (int i = 0; i < 10; ) {
+                        if (mMyFlag.count == 1) {
+                            b = i;
+                            Log.d(TAG, "B = " + b);
+                            mMyFlag.count=2;
+                            mMyFlag.notifyAll();
+                            //i chi tang khi nhay vao truong hop if
+                            i++;
+                        }
+                        else
+                        {
+                            try {
+                                mMyFlag.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        Thread thread3 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (mMyFlag) {
+                    for (int i = 0; i < 10;) {
+                        if (mMyFlag.count == 2) {
+                            c = a + b;
+                            Log.d(TAG, "C = " + c);
+                            mMyFlag.count=0;
+                            mMyFlag.notifyAll();
+                            //i chi tang khi nhay vao truong hop if
+                            i++;
+                        }
+                        else
+                        {
+                            try {
+                                mMyFlag.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
             }
         });
 
         thread1.start();
         thread2.start();
+        thread3.start();
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("TAG", thread1.getState().toString());
-                Log.d("TAG", thread2.getState().toString());
-            }
-        },1000);
     }
 
-    private synchronized void printLog(String b) {
-        for(int i=0;i<100;i++)
-        {
-            Log.d("BBB", b+": "+i);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }
