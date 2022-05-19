@@ -1,22 +1,31 @@
 package com.example.onthread;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
     int a, b, c;
     private final String TAG = "BBB";
     MyFlag mMyFlag;
-
+    Handler mHandler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         a = b = c = 0;
         mMyFlag = new MyFlag(0);
+        mHandler=new Handler(){
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                super.handleMessage(msg);
+            }
+        };
+
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -24,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
                     for (int i = 0; i < 10;) {
                         if (mMyFlag.count == 0) {
                             a = i;
+                            Message message=new Message();
+                            mHandler.handleMessage(message);
                             Log.d(TAG, "A = " + a);
                             mMyFlag.count=1;
                             //danh thuc tat ca cac thread dang wait cai flag nay
